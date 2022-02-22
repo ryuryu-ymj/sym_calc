@@ -32,6 +32,10 @@ impl<'input> Lexer<'input> {
                     '(' => return Some(Token::Lparen),
                     ')' => return Some(Token::Rparen),
                     '0'..='9' => return Some(self.read_number(i)),
+                    '\\' => return Some(self.read_identifier(i)),
+                    'a'..='z' | 'A'..='Z' => {
+                        return Some(Token::Ident(&self.input[i..i + 1]))
+                    }
                     _ => return Some(Token::Illegal),
                 },
             }
@@ -49,6 +53,22 @@ impl<'input> Lexer<'input> {
                         return Token::Num(&self.input[pos..*j]);
                     }
                 }
+            }
+        }
+    }
+
+    fn read_identifier(&mut self, pos: usize) -> Token {
+        loop {
+            match self.chars.peek() {
+                None => return Token::Ident(&self.input[pos..]),
+                Some((j, c)) => match *c {
+                    'a'..='z' | 'A'..='Z' => {
+                        self.chars.next();
+                    }
+                    _ => {
+                        return Token::Ident(&self.input[pos..*j]);
+                    }
+                },
             }
         }
     }
@@ -92,6 +112,28 @@ mod text_lexer {
                     Token::Rparen,
                     Token::Slash,
                     Token::Num("393"),
+                ],
+            ),
+            (
+                "ab c*de",
+                vec![
+                    Token::Ident("a"),
+                    Token::Ident("b"),
+                    Token::Ident("c"),
+                    Token::Asterisk,
+                    Token::Ident("d"),
+                    Token::Ident("e"),
+                ],
+            ),
+            (
+                r"\sin(3\pi a)",
+                vec![
+                    Token::Ident(r"\sin"),
+                    Token::Lparen,
+                    Token::Num("3"),
+                    Token::Ident(r"\pi"),
+                    Token::Ident("a"),
+                    Token::Rparen,
                 ],
             ),
         ];
