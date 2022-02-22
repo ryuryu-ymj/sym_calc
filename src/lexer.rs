@@ -20,26 +20,33 @@ impl<'input> Lexer<'input> {
         //     Some(ch) => ch,
         //     None => return Token::EOF,
         // };
-        match self.chars.next() {
-            None => None,
-            Some((i, c)) => match c {
-                '+' => Some(Token::Plus),
-                '*' => Some(Token::Asterisk),
-                '0'..='9' => Some(self.read_number(i)),
-                _ => Some(Token::Illegal),
-            },
+        loop {
+            match self.chars.next() {
+                None => return None,
+                Some((i, c)) => match c {
+                    ' ' | '\t' => continue,
+                    '+' => return Some(Token::Plus),
+                    '-' => return Some(Token::Minus),
+                    '*' => return Some(Token::Asterisk),
+                    '/' => return Some(Token::Slash),
+                    '(' => return Some(Token::Lparen),
+                    ')' => return Some(Token::Rparen),
+                    '0'..='9' => return Some(self.read_number(i)),
+                    _ => return Some(Token::Illegal),
+                },
+            }
         }
     }
 
-    fn read_number(&mut self, i: usize) -> Token {
+    fn read_number(&mut self, pos: usize) -> Token {
         loop {
             match self.chars.peek() {
-                None => return Token::Num(&self.input[i..]),
+                None => return Token::Num(&self.input[pos..]),
                 Some((j, c)) => {
                     if *c >= '0' && *c <= '9' {
                         self.chars.next();
                     } else {
-                        return Token::Num(&self.input[i..*j]);
+                        return Token::Num(&self.input[pos..*j]);
                     }
                 }
             }
@@ -54,19 +61,47 @@ mod text_lexer {
 
     #[test]
     fn test_next_token() {
-        let input = r"10+2*393";
-        let expected = [
-            Token::Num("10"),
-            Token::Plus,
-            Token::Num("2"),
-            Token::Asterisk,
-            Token::Num("393"),
+        let tests = [
+            (
+                "10+2*393",
+                vec![
+                    Token::Num("10"),
+                    Token::Plus,
+                    Token::Num("2"),
+                    Token::Asterisk,
+                    Token::Num("393"),
+                ],
+            ),
+            (
+                "\t10  +  2 * 393",
+                vec![
+                    Token::Num("10"),
+                    Token::Plus,
+                    Token::Num("2"),
+                    Token::Asterisk,
+                    Token::Num("393"),
+                ],
+            ),
+            (
+                "(10 - 2) / 393",
+                vec![
+                    Token::Lparen,
+                    Token::Num("10"),
+                    Token::Minus,
+                    Token::Num("2"),
+                    Token::Rparen,
+                    Token::Slash,
+                    Token::Num("393"),
+                ],
+            ),
         ];
 
-        let mut l = Lexer::new(input);
-        for e in expected {
-            let tok = l.next_token();
-            assert_eq!(tok.unwrap(), e);
+        for (input, expected) in tests {
+            let mut l = Lexer::new(input);
+            for e in expected {
+                let tok = l.next_token();
+                assert_eq!(tok.unwrap(), e);
+            }
         }
     }
 }
