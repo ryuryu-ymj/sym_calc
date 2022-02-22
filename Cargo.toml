@@ -1,5 +1,5 @@
 [package]
-name = "lalrpop_calc"
+name = "sym_calc"
 version = "0.1.0"
 # edition = "2021"
 
