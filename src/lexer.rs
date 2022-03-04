@@ -3,7 +3,7 @@ use std::iter::Peekable;
 use std::str::CharIndices;
 
 #[cfg(test)]
-mod test_lexer;
+mod test;
 
 pub struct Lexer<'input> {
     input: &'input str,

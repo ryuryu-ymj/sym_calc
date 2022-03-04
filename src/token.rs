@@ -9,4 +9,5 @@ pub enum Token<'a> {
     Lparen,
     Rparen,
     Illegal,
+    Dummy,
 }
