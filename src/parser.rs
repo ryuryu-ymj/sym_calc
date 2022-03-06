@@ -41,6 +41,7 @@ impl<'input> Parser<'input> {
                 self.bump();
                 ast::Expr::Num(s)
             }
+            Token::Lparen => self.parse_grouped_expr(),
             _ => match self.parse_unary_op() {
                 Some(op) => self.parse_unary_expr(op),
                 None => panic!("parsing error"),
@@ -93,5 +94,15 @@ impl<'input> Parser<'input> {
         self.bump();
         let right = self.parse_expr(p);
         ast::Expr::Binary(op, Box::new(left), Box::new(right))
+    }
+
+    fn parse_grouped_expr(&mut self) -> ast::Expr<'input> {
+        self.bump();
+        let e = self.parse_expr(Precedence::Lowest);
+        if self.token != Token::Rparen {
+            panic!("No corresponding right parentheses.");
+        }
+        self.bump();
+        e
     }
 }

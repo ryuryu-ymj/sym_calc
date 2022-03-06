@@ -76,6 +76,31 @@ fn test_parse_unary_expr() {
 }
 
 #[test]
+fn test_parse_grouped_expr() {
+    let tests = [
+        ("(10)", ast::Expr::Num("10")),
+        (
+            "(10 + 7) * 100",
+            ast::Expr::Binary(
+                ast::BinOp::Mul,
+                Box::new(ast::Expr::Binary(
+                    ast::BinOp::Add,
+                    Box::new(ast::Expr::Num("10")),
+                    Box::new(ast::Expr::Num("7")),
+                )),
+                Box::new(ast::Expr::Num("100")),
+            ),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        assert_eq!(p.parse_expr_stmt(), expected);
+    }
+}
+
+#[test]
 fn test_parse_arithmetic_expr() {
     let tests = [
         (
