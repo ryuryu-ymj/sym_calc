@@ -64,7 +64,7 @@ fn test_next_token() {
         let mut l = Lexer::new(input);
         for e in expected {
             let tok = l.next_token();
-            assert_eq!(tok.unwrap(), e);
+            assert_eq!(tok, e);
         }
     }
 }

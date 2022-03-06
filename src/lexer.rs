@@ -18,34 +18,34 @@ impl<'input> Lexer<'input> {
         }
     }
 
-    pub fn next_token(&mut self) -> Option<Token> {
+    pub fn next_token(&mut self) -> Token<'input> {
         // let ch = match self.chars.next() {
         //     Some(ch) => ch,
         //     None => return Token::EOF,
         // };
         loop {
             match self.chars.next() {
-                None => return None,
+                None => return Token::Eof,
                 Some((i, c)) => match c {
                     ' ' | '\t' => continue,
-                    '+' => return Some(Token::Plus),
-                    '-' => return Some(Token::Minus),
-                    '*' => return Some(Token::Asterisk),
-                    '/' => return Some(Token::Slash),
-                    '(' => return Some(Token::Lparen),
-                    ')' => return Some(Token::Rparen),
-                    '0'..='9' => return Some(self.read_number(i)),
-                    '\\' => return Some(self.read_identifier(i)),
+                    '+' => return Token::Plus,
+                    '-' => return Token::Minus,
+                    '*' => return Token::Asterisk,
+                    '/' => return Token::Slash,
+                    '(' => return Token::Lparen,
+                    ')' => return Token::Rparen,
+                    '0'..='9' => return self.read_number(i),
+                    '\\' => return self.read_identifier(i),
                     'a'..='z' | 'A'..='Z' => {
-                        return Some(Token::Ident(&self.input[i..i + 1]))
+                        return Token::Ident(&self.input[i..i + 1])
                     }
-                    _ => return Some(Token::Illegal),
+                    _ => return Token::Illegal,
                 },
             }
         }
     }
 
-    fn read_number(&mut self, pos: usize) -> Token {
+    fn read_number(&mut self, pos: usize) -> Token<'input> {
         loop {
             match self.chars.peek() {
                 None => return Token::Num(&self.input[pos..]),
@@ -60,7 +60,7 @@ impl<'input> Lexer<'input> {
         }
     }
 
-    fn read_identifier(&mut self, pos: usize) -> Token {
+    fn read_identifier(&mut self, pos: usize) -> Token<'input> {
         loop {
             match self.chars.peek() {
                 None => return Token::Ident(&self.input[pos..]),

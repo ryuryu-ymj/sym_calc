@@ -11,3 +11,12 @@ pub enum BinOp {
     Mul,
     Div,
 }
+
+impl BinOp {
+    pub fn precedence(&self) -> u32 {
+        match &self {
+            BinOp::Mul | BinOp::Div => 2,
+            BinOp::Add | BinOp::Sub => 1,
+        }
+    }
+}
