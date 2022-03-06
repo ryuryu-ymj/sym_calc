@@ -43,7 +43,7 @@ impl<'input> Parser<'input> {
             }
             _ => match self.parse_unary_op() {
                 Some(op) => self.parse_unary_expr(op),
-                None => panic!(),
+                None => panic!("parsing error"),
             },
         };
 
