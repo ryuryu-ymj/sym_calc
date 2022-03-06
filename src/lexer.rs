@@ -19,10 +19,6 @@ impl<'input> Lexer<'input> {
     }
 
     pub fn next_token(&mut self) -> Token<'input> {
-        // let ch = match self.chars.next() {
-        //     Some(ch) => ch,
-        //     None => return Token::EOF,
-        // };
         loop {
             match self.chars.next() {
                 None => return Token::Eof,

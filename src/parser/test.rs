@@ -2,7 +2,7 @@ use super::*;
 use crate::ast;
 
 #[test]
-fn test_parser() {
+fn test_parse_binary_expr() {
     let tests = [
         (
             "12+3-10",
