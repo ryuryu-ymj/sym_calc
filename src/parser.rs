@@ -1,13 +1,19 @@
 use crate::{ast, lexer::Lexer, token::Token};
-use std::mem;
 
 #[cfg(test)]
 mod test;
 
+#[derive(PartialEq, PartialOrd)]
+enum Precedence {
+    Lowest,
+    Sum,
+    Prod,
+    Unary,
+}
+
 pub struct Parser<'input> {
     lexer: Lexer<'input>,
     token: Token<'input>,
-    next_token: Token<'input>,
 }
 
 impl<'input> Parser<'input> {
@@ -15,34 +21,39 @@ impl<'input> Parser<'input> {
         let mut p = Parser {
             lexer,
             token: Token::Eof,
-            next_token: Token::Eof,
         };
 
-        p.bump();
         p.bump();
         p
     }
 
     fn bump(&mut self) {
-        self.token =
-            mem::replace(&mut self.next_token, self.lexer.next_token());
+        self.token = self.lexer.next_token();
     }
 
-    pub fn parse_expr(&mut self, precedence: u32) -> ast::Expr<'input> {
+    pub fn parse_expr_stmt(&mut self) -> ast::Expr<'input> {
+        self.parse_expr(Precedence::Lowest)
+    }
+
+    fn parse_expr(&mut self, precedence: Precedence) -> ast::Expr<'input> {
         let mut left = match self.token {
-            Token::Num(s) => ast::Expr::Num(s),
-            _ => panic!(),
+            Token::Num(s) => {
+                self.bump();
+                ast::Expr::Num(s)
+            }
+            _ => match self.parse_unary_op() {
+                Some(op) => self.parse_unary_expr(op),
+                None => panic!(),
+            },
         };
-        self.bump();
 
         loop {
             match self.parse_binary_op() {
-                Some(op) => {
-                    let op_prec = op.precedence();
-                    if precedence >= op_prec {
+                Some((op, p)) => {
+                    if precedence >= p {
                         break;
                     }
-                    left = self.parse_binary_expr(op, left, op_prec);
+                    left = self.parse_binary_expr(op, left, p);
                 }
                 None => return left,
             }
@@ -50,12 +61,25 @@ impl<'input> Parser<'input> {
         left
     }
 
-    fn parse_binary_op(&self) -> Option<ast::BinOp> {
+    fn parse_unary_op(&self) -> Option<ast::UnOp> {
         match self.token {
-            Token::Plus => Some(ast::BinOp::Add),
-            Token::Minus => Some(ast::BinOp::Sub),
-            Token::Asterisk => Some(ast::BinOp::Mul),
-            Token::Slash => Some(ast::BinOp::Div),
+            Token::Minus => Some(ast::UnOp::Neg),
+            _ => None,
+        }
+    }
+
+    fn parse_unary_expr(&mut self, op: ast::UnOp) -> ast::Expr<'input> {
+        self.bump();
+        let e = self.parse_expr(Precedence::Unary);
+        ast::Expr::Unary(op, Box::new(e))
+    }
+
+    fn parse_binary_op(&self) -> Option<(ast::BinOp, Precedence)> {
+        match self.token {
+            Token::Plus => Some((ast::BinOp::Add, Precedence::Sum)),
+            Token::Minus => Some((ast::BinOp::Sub, Precedence::Sum)),
+            Token::Asterisk => Some((ast::BinOp::Mul, Precedence::Prod)),
+            Token::Slash => Some((ast::BinOp::Div, Precedence::Prod)),
             _ => None,
         }
     }
@@ -64,10 +88,10 @@ impl<'input> Parser<'input> {
         &mut self,
         op: ast::BinOp,
         left: ast::Expr<'input>,
-        precedence: u32,
+        p: Precedence,
     ) -> ast::Expr<'input> {
         self.bump();
-        let right = self.parse_expr(precedence);
+        let right = self.parse_expr(p);
         ast::Expr::Binary(op, Box::new(left), Box::new(right))
     }
 }
