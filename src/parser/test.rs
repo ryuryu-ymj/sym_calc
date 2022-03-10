@@ -40,6 +40,18 @@ fn test_parse_binary_expr() {
                 Box::new(ast::Expr::Num("9")),
             ),
         ),
+        (
+            "a/\\pi - d",
+            ast::Expr::Binary(
+                ast::BinOp::Sub,
+                Box::new(ast::Expr::Binary(
+                    ast::BinOp::Div,
+                    Box::new(ast::Expr::Ident("a")),
+                    Box::new(ast::Expr::Ident("\\pi")),
+                )),
+                Box::new(ast::Expr::Ident("d")),
+            ),
+        ),
     ];
 
     for (input, expected) in tests {
@@ -55,6 +67,10 @@ fn test_parse_unary_expr() {
         (
             "-10",
             ast::Expr::Unary(ast::UnOp::Neg, Box::new(ast::Expr::Num("10"))),
+        ),
+        (
+            "-b",
+            ast::Expr::Unary(ast::UnOp::Neg, Box::new(ast::Expr::Ident("b"))),
         ),
         (
             "--10",
@@ -126,6 +142,50 @@ fn test_parse_arithmetic_expr() {
                     )),
                 )),
                 Box::new(ast::Expr::Num("10")),
+            ),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        assert_eq!(p.parse_expr_stmt(), expected);
+    }
+}
+
+#[test]
+fn test_parse_implied_mul_expr() {
+    let tests = [
+        (
+            "abc",
+            ast::Expr::Binary(
+                ast::BinOp::ImpliedMul,
+                Box::new(ast::Expr::Binary(
+                    ast::BinOp::ImpliedMul,
+                    Box::new(ast::Expr::Ident("a")),
+                    Box::new(ast::Expr::Ident("b")),
+                )),
+                Box::new(ast::Expr::Ident("c")),
+            ),
+        ),
+        (
+            "3\\pi a/2b",
+            ast::Expr::Binary(
+                ast::BinOp::Div,
+                Box::new(ast::Expr::Binary(
+                    ast::BinOp::ImpliedMul,
+                    Box::new(ast::Expr::Binary(
+                        ast::BinOp::ImpliedMul,
+                        Box::new(ast::Expr::Num("3")),
+                        Box::new(ast::Expr::Ident("\\pi")),
+                    )),
+                    Box::new(ast::Expr::Ident("a")),
+                )),
+                Box::new(ast::Expr::Binary(
+                    ast::BinOp::ImpliedMul,
+                    Box::new(ast::Expr::Num("2")),
+                    Box::new(ast::Expr::Ident("b")),
+                )),
             ),
         ),
     ];

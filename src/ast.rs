@@ -1,6 +1,7 @@
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {
     Num(&'input str),
+    Ident(&'input str),
     Unary(UnOp, Box<Expr<'input>>),
     Binary(BinOp, Box<Expr<'input>>, Box<Expr<'input>>),
 }
@@ -16,4 +17,5 @@ pub enum BinOp {
     Sub,
     Mul,
     Div,
+    ImpliedMul,
 }
