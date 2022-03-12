@@ -1,4 +1,4 @@
-use crate::{ast, lexer::Lexer, token::Token};
+use super::{ast, lexer::Lexer, token::Token};
 
 #[cfg(test)]
 mod test;

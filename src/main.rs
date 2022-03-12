@@ -1,12 +1,6 @@
-mod ast;
-mod eval;
-mod lexer;
-mod object;
-mod parser;
-mod token;
+mod interpret;
 
-use lexer::Lexer;
-use parser::Parser;
+use interpret::{eval, lexer::Lexer, parser::Parser};
 
 fn main() {
     loop {

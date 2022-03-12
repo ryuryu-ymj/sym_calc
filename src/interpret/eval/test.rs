@@ -1,6 +1,5 @@
+use super::super::{lexer::Lexer, parser::Parser};
 use super::*;
-use lexer::Lexer;
-use parser::Parser;
 
 #[test]
 fn test_eval_expr() {

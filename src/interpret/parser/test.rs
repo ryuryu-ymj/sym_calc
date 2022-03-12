@@ -1,5 +1,5 @@
+use super::super::ast;
 use super::*;
-use crate::ast;
 
 #[test]
 fn test_parse_binary_expr() {

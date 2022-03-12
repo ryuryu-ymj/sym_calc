@@ -1,4 +1,4 @@
-use crate::{ast, object};
+use super::{ast, object};
 
 #[cfg(test)]
 mod test;

@@ -1,5 +1,5 @@
+use super::super::token::Token;
 use super::*;
-use crate::token::Token;
 
 #[test]
 fn test_next_token() {
