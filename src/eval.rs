@@ -1,5 +1,8 @@
 use crate::{ast, object};
 
+#[cfg(test)]
+mod test;
+
 const NEG_ONE: object::Expr = object::Expr::Num(-1);
 
 fn add(left: object::Expr, right: object::Expr) -> object::Expr {
