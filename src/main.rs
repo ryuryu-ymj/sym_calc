@@ -1,6 +1,8 @@
 mod interpret;
+mod math;
 
 use interpret::{eval, lexer::Lexer, parser::Parser};
+use math::standardize;
 
 fn main() {
     loop {
@@ -11,7 +13,8 @@ fn main() {
         let l = Lexer::new(&input[..]);
         let mut p = Parser::new(l);
         let expr = p.parse_expr_stmt();
-        let expr = eval::eval_expr(expr);
+        let mut expr = eval::eval_expr(expr);
+        expr = standardize::standardize(expr);
         println!("{:?}", expr);
     }
 }

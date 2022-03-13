@@ -1,4 +1,5 @@
-use super::{ast, object};
+use super::ast;
+use super::object::{self, add, mul, pow};
 
 #[cfg(test)]
 mod test;
@@ -28,44 +29,4 @@ pub fn eval_expr(e: ast::Expr) -> object::Expr {
             }
         },
     }
-}
-
-fn add(left: object::Expr, right: object::Expr) -> object::Expr {
-    match (left, right) {
-        (object::Expr::Add(mut v1), object::Expr::Add(mut v2)) => {
-            v1.append(&mut v2);
-            object::Expr::Add(v1)
-        }
-        (object::Expr::Add(mut v), e) => {
-            v.push(e);
-            object::Expr::Add(v)
-        }
-        (e, object::Expr::Add(mut v)) => {
-            v.push(e);
-            object::Expr::Add(v)
-        }
-        (l, r) => object::Expr::Add(vec![l, r]),
-    }
-}
-
-fn mul(left: object::Expr, right: object::Expr) -> object::Expr {
-    match (left, right) {
-        (object::Expr::Mul(mut v1), object::Expr::Mul(mut v2)) => {
-            v1.append(&mut v2);
-            object::Expr::Mul(v1)
-        }
-        (object::Expr::Mul(mut v), e) => {
-            v.push(e);
-            object::Expr::Mul(v)
-        }
-        (e, object::Expr::Mul(mut v)) => {
-            v.push(e);
-            object::Expr::Mul(v)
-        }
-        (l, r) => object::Expr::Mul(vec![l, r]),
-    }
-}
-
-fn pow(base: object::Expr, power: object::Expr) -> object::Expr {
-    object::Expr::Pow(Box::new(base), Box::new(power))
 }

@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum Expr {
     Num(i32),
     Ident(String),
@@ -36,4 +37,44 @@ fn fmt_expr_list(
     } else {
         Ok(())
     }
+}
+
+pub fn add(left: Expr, right: Expr) -> Expr {
+    match (left, right) {
+        (Expr::Add(mut v1), Expr::Add(mut v2)) => {
+            v1.append(&mut v2);
+            Expr::Add(v1)
+        }
+        (Expr::Add(mut v), e) => {
+            v.push(e);
+            Expr::Add(v)
+        }
+        (e, Expr::Add(mut v)) => {
+            v.insert(0, e);
+            Expr::Add(v)
+        }
+        (l, r) => Expr::Add(vec![l, r]),
+    }
+}
+
+pub fn mul(left: Expr, right: Expr) -> Expr {
+    match (left, right) {
+        (Expr::Mul(mut v1), Expr::Mul(mut v2)) => {
+            v1.append(&mut v2);
+            Expr::Mul(v1)
+        }
+        (Expr::Mul(mut v), e) => {
+            v.push(e);
+            Expr::Mul(v)
+        }
+        (e, Expr::Mul(mut v)) => {
+            v.insert(0, e);
+            Expr::Mul(v)
+        }
+        (l, r) => Expr::Mul(vec![l, r]),
+    }
+}
+
+pub fn pow(base: Expr, power: Expr) -> Expr {
+    Expr::Pow(Box::new(base), Box::new(power))
 }
