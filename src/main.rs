@@ -1,7 +1,7 @@
-mod interpret;
+mod interpreter;
 mod math;
 
-use interpret::{eval, lexer::Lexer, parser::Parser};
+use interpreter::{eval, lexer::Lexer, parser::Parser};
 use math::standardize;
 
 fn main() {
