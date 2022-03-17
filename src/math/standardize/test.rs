@@ -1,5 +1,5 @@
 use super::*;
-use crate::interpret::{eval, lexer::Lexer, parser::Parser};
+use crate::interpreter::{eval, lexer::Lexer, parser::Parser};
 
 #[test]
 fn test_standardize() {
@@ -13,6 +13,8 @@ fn test_standardize() {
         ("zyx3", "(3 * x * y * z)"),
         ("xx + yyy", "((x ^ 2) + (y ^ 3))"),
         ("xy + yx", "(2 * x * y)"),
+        ("x/x", "1"),
+        ("xy/yx", "1"),
     ];
 
     for (input, expected) in tests {

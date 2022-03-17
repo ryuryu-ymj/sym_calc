@@ -1,4 +1,4 @@
-use crate::interpret::object::{mul, pow, Expr};
+use crate::interpreter::object::{mul, pow, Expr};
 use std::collections::BTreeMap;
 
 #[cfg(test)]
@@ -92,6 +92,13 @@ fn standardize_mul(v: Vec<Expr>) -> (i32, Vec<Expr>) {
         match e {
             Expr::Num(n) => {
                 coeff *= n;
+            }
+            Expr::Pow(base, exp) => {
+                let base = standardize(*base);
+                let exp = standardize(*exp);
+                if let Expr::Num(n) = exp {
+                    *terms.entry(base).or_insert(0) += n;
+                }
             }
             _ => {
                 *terms.entry(e).or_insert(0) += 1;
