@@ -5,12 +5,12 @@ mod test;
 
 const ONE: Expr = Expr::Num(1);
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum Expr {
     Num(i32),
     Sym(String),
     Add(Add),
-    Mul(Add),
+    Mul(Mul),
     Pow(Box<Expr>, Box<Expr>),
 }
 
@@ -24,7 +24,7 @@ impl Expr {
     }
 
     fn pow(self, exp: Expr) -> Expr {
-        todo!()
+        Expr::Pow(Box::new(self), Box::new(exp))
     }
 }
 
@@ -38,14 +38,25 @@ impl std::ops::Add for Expr {
 impl std::ops::Mul for Expr {
     type Output = Expr;
     fn mul(self, rhs: Self) -> Self::Output {
-        todo!()
+        Mul::mul(self, rhs).to_expr()
     }
 }
 
+#[derive(Debug)]
 pub struct Add {
     args: Option<Vec<Expr>>,
     coeff: i32,
     terms: BTreeMap<Expr, i32>,
+}
+
+impl Clone for Add {
+    fn clone(&self) -> Self {
+        Add {
+            args: None,
+            coeff: self.coeff,
+            terms: self.terms.clone(),
+        }
+    }
 }
 
 impl PartialEq for Add {
@@ -79,6 +90,17 @@ impl Add {
         }
     }
 
+    fn args(&mut self) -> &Vec<Expr> {
+        let terms = &self.terms;
+        self.args.get_or_insert_with(|| {
+            let mut args = Vec::new();
+            for (e, c) in terms {
+                args.push(Expr::Num(*c) * e.clone());
+            }
+            args
+        })
+    }
+
     fn to_expr(self) -> Expr {
         if self.terms.is_empty() {
             return Expr::Num(self.coeff);
@@ -106,6 +128,101 @@ impl Add {
             e @ _ => {
                 let (c, e) = e.to_coeff_mul();
                 *self.terms.entry(e).or_insert(0) += c;
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Mul {
+    args: Option<Vec<Expr>>,
+    coeff: i32,
+    terms: BTreeMap<Expr, i32>,
+}
+
+impl Clone for Mul {
+    fn clone(&self) -> Self {
+        Mul {
+            args: None,
+            coeff: self.coeff,
+            terms: self.terms.clone(),
+        }
+    }
+}
+
+impl PartialEq for Mul {
+    fn eq(&self, other: &Self) -> bool {
+        self.coeff == other.coeff && self.terms == other.terms
+    }
+}
+
+impl Eq for Mul {}
+
+impl Ord for Mul {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.terms
+            .cmp(&other.terms)
+            .then(self.coeff.cmp(&other.coeff))
+    }
+}
+
+impl PartialOrd for Mul {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Mul {
+    fn new() -> Mul {
+        Mul {
+            args: None,
+            coeff: 1,
+            terms: BTreeMap::new(),
+        }
+    }
+
+    fn args(&mut self) -> &Vec<Expr> {
+        let terms = &self.terms;
+        self.args.get_or_insert_with(|| {
+            let mut args = Vec::new();
+            for (e, c) in terms {
+                args.push(Expr::pow(e.clone(), Expr::Num(*c)));
+            }
+            args
+        })
+    }
+
+    fn to_expr(self) -> Expr {
+        if self.coeff == 0 {
+            return Expr::Num(0);
+        } else if self.terms.is_empty() {
+            return Expr::Num(self.coeff);
+        } else if self.coeff == 1 && self.terms.len() == 1 {
+            let (e, c) = self.terms.into_iter().next().unwrap();
+            return Expr::pow(e, Expr::Num(c));
+        }
+        Expr::Mul(self)
+    }
+
+    fn mul(left: Expr, right: Expr) -> Mul {
+        let mut a = Mul::new();
+        a.mul_assign(left);
+        a.mul_assign(right);
+        a
+    }
+
+    fn mul_assign(&mut self, other: Expr) {
+        if self.coeff != 0 {
+            match other {
+                Expr::Mul(mut other) => {
+                    self.coeff *= other.coeff;
+                    self.terms.append(&mut other.terms);
+                }
+                Expr::Num(n) => self.coeff *= n,
+                e @ _ => {
+                    let (c, e) = e.to_coeff_mul();
+                    *self.terms.entry(e).or_insert(0) += c;
+                }
             }
         }
     }

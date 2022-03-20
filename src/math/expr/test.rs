@@ -13,10 +13,23 @@ fn test_expr_add() {
     let tests = [
         (num(1) + num(2), num(3)),
         (sym("y") + sym("x"), sym("x") + sym("y")),
-        // (sym("x") + sym("x"), num(2) * sym("x")),
+        (sym("x") + sym("x"), num(2) * sym("x")),
     ];
 
     for (input, expected) in tests {
-        assert!(input == expected);
+        assert_eq!(input, expected);
+    }
+}
+
+#[test]
+fn test_expr_mul() {
+    let tests = [
+        (num(3) * num(2), num(6)),
+        (sym("y") * sym("x"), sym("x") * sym("y")),
+        (sym("x") * sym("x"), Expr::pow(sym("x"), num(2))),
+    ];
+
+    for (input, expected) in tests {
+        assert_eq!(input, expected);
     }
 }
