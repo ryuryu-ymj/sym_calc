@@ -1,12 +1,16 @@
 use std::collections::BTreeMap;
+use std::fmt;
 
 #[cfg(test)]
 mod test;
 
-const ONE: Expr = Expr::Num(1);
+pub const ZERO: Expr = Expr::Num(0);
+pub const ONE: Expr = Expr::Num(1);
+pub const NEG_ONE: Expr = Expr::Num(-1);
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum Expr {
+    // Box(Box<Expr>),
     Num(i32),
     Sym(String),
     Add(Add),
@@ -14,35 +18,104 @@ pub enum Expr {
     Pow(Box<Expr>, Box<Expr>),
 }
 
+impl Default for Expr {
+    fn default() -> Self {
+        ZERO
+    }
+}
+
+impl fmt::Debug for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expr::Num(n) => write!(f, "{}", n),
+            Expr::Sym(s) => write!(f, "{}", s),
+            Expr::Add(a) => fmt_expr_list(f, a.clone().args(), '+'),
+            Expr::Mul(m) => fmt_expr_list(f, m.clone().args(), '*'),
+            Expr::Pow(b, e) => write!(f, "({:?} ^ {:?})", b, e),
+        }
+    }
+}
+
+fn fmt_expr_list(
+    f: &mut fmt::Formatter<'_>,
+    v: &[Expr],
+    op: char,
+) -> fmt::Result {
+    let mut i = v.iter();
+    if let Some(e) = i.next() {
+        let mut r = write!(f, "({:?}", e);
+        for e in i {
+            r = r.and_then(|_| write!(f, " {} {:?}", op, e));
+        }
+        r = r.and_then(|_| write!(f, ")"));
+        r
+    } else {
+        Ok(())
+    }
+}
+
 impl Expr {
-    fn to_coeff_mul(self) -> (i32, Expr) {
+    fn into_coeff_mul(self) -> (i32, Expr) {
         match self {
             Expr::Num(n) => (n, ONE),
             e @ Expr::Sym(_) | e @ Expr::Add(_) | e @ Expr::Pow(_, _) => (1, e),
-            Expr::Mul(m) => (m.coeff, m.to_expr()),
+            Expr::Mul(m) => m.into_coeff_mul(),
         }
     }
 
     fn pow(self, exp: Expr) -> Expr {
-        Expr::Pow(Box::new(self), Box::new(exp))
+        // TODO: 0^0 = 1?
+        match (self, exp) {
+            (_, ZERO) => ONE,
+            (base, ONE) => base,
+            (ZERO, _) => ZERO,
+            (ONE, _) => ONE,
+            (Expr::Num(n), Expr::Num(m)) => {
+                if m > 0 {
+                    Expr::Num(n.pow(m.unsigned_abs()))
+                } else {
+                    ONE / Expr::Num(n.pow(m.unsigned_abs()))
+                }
+            }
+            (base, exp) => Expr::Pow(Box::new(base), Box::new(exp)),
+        }
     }
 }
 
 impl std::ops::Add for Expr {
     type Output = Expr;
     fn add(self, rhs: Self) -> Self::Output {
-        Add::add(self, rhs).to_expr()
+        Add::add(self, rhs).into_expr()
+    }
+}
+
+impl std::ops::AddAssign for Expr {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = std::mem::take(self) + rhs;
+    }
+}
+
+impl std::ops::Sub for Expr {
+    type Output = Expr;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self + rhs * NEG_ONE
     }
 }
 
 impl std::ops::Mul for Expr {
     type Output = Expr;
     fn mul(self, rhs: Self) -> Self::Output {
-        Mul::mul(self, rhs).to_expr()
+        Mul::mul(self, rhs).into_expr()
     }
 }
 
-#[derive(Debug)]
+impl std::ops::Div for Expr {
+    type Output = Expr;
+    fn div(self, rhs: Self) -> Self::Output {
+        self * Expr::pow(rhs, NEG_ONE)
+    }
+}
+
 pub struct Add {
     args: Option<Vec<Expr>>,
     coeff: i32,
@@ -92,16 +165,20 @@ impl Add {
 
     fn args(&mut self) -> &Vec<Expr> {
         let terms = &self.terms;
+        let coeff = self.coeff;
         self.args.get_or_insert_with(|| {
             let mut args = Vec::new();
             for (e, c) in terms {
                 args.push(Expr::Num(*c) * e.clone());
             }
+            if coeff != 0 {
+                args.push(Expr::Num(coeff));
+            }
             args
         })
     }
 
-    fn to_expr(self) -> Expr {
+    fn into_expr(self) -> Expr {
         if self.terms.is_empty() {
             return Expr::Num(self.coeff);
         } else if self.coeff == 0 && self.terms.len() == 1 {
@@ -125,11 +202,12 @@ impl Add {
                 self.terms.append(&mut other.terms);
             }
             Expr::Num(n) => self.coeff += n,
-            e @ _ => {
-                let (c, e) = e.to_coeff_mul();
+            e => {
+                let (c, e) = e.into_coeff_mul();
                 *self.terms.entry(e).or_insert(0) += c;
             }
         }
+        self.args = None;
     }
 }
 
@@ -137,7 +215,7 @@ impl Add {
 pub struct Mul {
     args: Option<Vec<Expr>>,
     coeff: i32,
-    terms: BTreeMap<Expr, i32>,
+    terms: BTreeMap<Expr, Expr>,
 }
 
 impl Clone for Mul {
@@ -183,32 +261,36 @@ impl Mul {
 
     fn args(&mut self) -> &Vec<Expr> {
         let terms = &self.terms;
+        let coeff = self.coeff;
         self.args.get_or_insert_with(|| {
             let mut args = Vec::new();
+            if coeff != 1 {
+                args.push(Expr::Num(coeff));
+            }
             for (e, c) in terms {
-                args.push(Expr::pow(e.clone(), Expr::Num(*c)));
+                args.push(Expr::pow(e.clone(), c.clone()));
             }
             args
         })
     }
 
-    fn to_expr(self) -> Expr {
+    fn into_expr(self) -> Expr {
         if self.coeff == 0 {
-            return Expr::Num(0);
+            return ZERO;
         } else if self.terms.is_empty() {
             return Expr::Num(self.coeff);
         } else if self.coeff == 1 && self.terms.len() == 1 {
             let (e, c) = self.terms.into_iter().next().unwrap();
-            return Expr::pow(e, Expr::Num(c));
+            return Expr::pow(e, c);
         }
         Expr::Mul(self)
     }
 
     fn mul(left: Expr, right: Expr) -> Mul {
-        let mut a = Mul::new();
-        a.mul_assign(left);
-        a.mul_assign(right);
-        a
+        let mut m = Mul::new();
+        m.mul_assign(left);
+        m.mul_assign(right);
+        m
     }
 
     fn mul_assign(&mut self, other: Expr) {
@@ -219,11 +301,26 @@ impl Mul {
                     self.terms.append(&mut other.terms);
                 }
                 Expr::Num(n) => self.coeff *= n,
-                e @ _ => {
-                    let (c, e) = e.to_coeff_mul();
-                    *self.terms.entry(e).or_insert(0) += c;
+                Expr::Pow(base, exp) => {
+                    *self.terms.entry(*base).or_insert(ZERO) += *exp;
+                    // let t = self.terms.get(&base).unwrap_or(&ZERO);
+                    // let exp = *t + *exp;
+                    // self.terms.insert(*base, exp);
+                }
+                e => {
+                    *self.terms.entry(e).or_insert(ZERO) += ONE;
+                    // let old = self.terms.get(&e).unwrap_or(&ZERO);
+                    // let new = *old + ONE;
+                    // self.terms.insert(e, new);
                 }
             }
         }
+        self.args = None;
+    }
+
+    fn into_coeff_mul(mut self) -> (i32, Expr) {
+        let c = self.coeff;
+        self.coeff = 1;
+        (c, self.into_expr())
     }
 }
