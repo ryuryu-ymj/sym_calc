@@ -65,6 +65,7 @@ fn test_expr() {
         ("yz + 3 + z + y - x", "((-1 * x) + y + z + (y * z) + 3)"),
         ("x / x", "1"),
         ("xy / yx", "1"),
+        ("1 / xx / xx", "(x ^ -4)"),
     ];
 
     for (input, expected) in tests {

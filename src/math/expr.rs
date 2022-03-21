@@ -78,6 +78,7 @@ impl Expr {
                 println!("{:?}", ret);
                 ret
             }
+            (Expr::Pow(base, exp2), exp1) => Expr::pow(*base, *exp2 * exp1),
             (base, exp) => Expr::Pow(Box::new(base), Box::new(exp)),
         }
     }
