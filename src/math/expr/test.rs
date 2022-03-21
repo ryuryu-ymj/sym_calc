@@ -7,7 +7,6 @@ fn test_add_expr() {
         ("1 - 2", "-1"),
         ("x + x", "(2 * x)"),
         ("x + x + x", "(3 * x)"),
-        ("x - x", "0"),
     ];
 
     for (input, expected) in tests {
@@ -28,8 +27,6 @@ fn test_mul_expr() {
         ("x * x * x", "(x ^ 3)"),
         ("zyx3", "(3 * x * y * z)"),
         ("zyx0", "0"),
-        ("x / x", "1"),
-        ("xy / yx", "1"),
     ];
 
     for (input, expected) in tests {
@@ -44,9 +41,13 @@ fn test_mul_expr() {
 #[test]
 fn test_expr() {
     let tests = [
+        ("x - x", "0"),
+        ("x + y - x - y", "0"),
         ("xx + yyy", "((x ^ 2) + (y ^ 3))"),
         ("xy + yx", "(2 * x * y)"),
         ("yz + 3 + z + y - x", "((-1 * x) + y + z + (y * z) + 3)"),
+        ("x / x", "1"),
+        ("xy / yx", "1"),
     ];
 
     for (input, expected) in tests {
