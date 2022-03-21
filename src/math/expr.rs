@@ -67,7 +67,8 @@ impl Expr {
                 if m > 0 {
                     Expr::Num(n.pow(m.unsigned_abs()))
                 } else {
-                    ONE / Expr::Num(n.pow(m.unsigned_abs()))
+                    // TODO: return rational number.
+                    Expr::Pow(Box::new(Expr::Num(n)), Box::new(Expr::Num(m)))
                 }
             }
             (Expr::Mul(mul), exp @ Expr::Num(_)) => {
