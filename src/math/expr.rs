@@ -75,7 +75,6 @@ impl Expr {
                 for e in mul.into_args() {
                     ret = ret * (Expr::pow(e, exp.clone()));
                 }
-                println!("{:?}", ret);
                 ret
             }
             (Expr::Pow(base, exp2), exp1) => Expr::pow(*base, *exp2 * exp1),
