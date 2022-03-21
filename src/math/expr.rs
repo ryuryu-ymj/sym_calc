@@ -111,32 +111,10 @@ impl std::ops::Div for Expr {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Add {
-    coeff: i32,
     terms: BTreeMap<Expr, i32>,
-}
-
-impl PartialEq for Add {
-    fn eq(&self, other: &Self) -> bool {
-        self.coeff == other.coeff && self.terms == other.terms
-    }
-}
-
-impl Eq for Add {}
-
-impl Ord for Add {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.terms
-            .cmp(&other.terms)
-            .then(self.coeff.cmp(&other.coeff))
-    }
-}
-
-impl PartialOrd for Add {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
+    coeff: i32,
 }
 
 impl Default for Add {
@@ -207,32 +185,10 @@ impl Add {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Mul {
-    coeff: i32,
     terms: BTreeMap<Expr, Add>,
-}
-
-impl PartialEq for Mul {
-    fn eq(&self, other: &Self) -> bool {
-        self.coeff == other.coeff && self.terms == other.terms
-    }
-}
-
-impl Eq for Mul {}
-
-impl Ord for Mul {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.terms
-            .cmp(&other.terms)
-            .then(self.coeff.cmp(&other.coeff))
-    }
-}
-
-impl PartialOrd for Mul {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
+    coeff: i32,
 }
 
 impl Mul {

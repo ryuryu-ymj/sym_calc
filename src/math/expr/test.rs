@@ -1,15 +1,19 @@
 use crate::interpreter::{eval, lexer::Lexer, parser::Parser};
 
-// #[test]
-// fn test_expr_ord() {
-//     let seq = ["x", "y", "z"];
-//     let seq = seq.map(|expr| {
-//         let l = Lexer::new(expr);
-//         let mut p = Parser::new(l);
-//         let expr = p.parse_expr_stmt();
-//         eval::eval_expr(expr)
-//     });
-// }
+#[test]
+fn test_expr_ord() {
+    let seq = ["0", "1", "x", "y", "z", "x + y", "x + z", "2x", "3x", "2y"];
+    let seq = seq.map(|expr| {
+        let l = Lexer::new(expr);
+        let mut p = Parser::new(l);
+        let expr = p.parse_expr_stmt();
+        eval::eval_expr(expr)
+    });
+    let mut seq = seq.iter();
+    while let (Some(e), Some(f)) = (seq.next(), seq.next()) {
+        assert!(e < f);
+    }
+}
 
 #[test]
 fn test_add_expr() {
@@ -18,6 +22,7 @@ fn test_add_expr() {
         ("1 - 2", "-1"),
         ("x + x", "(2 * x)"),
         ("x + x + x", "(3 * x)"),
+        ("z + y + x", "(x + y + z)"),
     ];
 
     for (input, expected) in tests {
@@ -53,6 +58,7 @@ fn test_mul_expr() {
 fn test_expr() {
     let tests = [
         ("x - x", "0"),
+        ("x - 2x", "(-1 * x)"),
         ("x + y - x - y", "0"),
         ("xx + yyy", "((x ^ 2) + (y ^ 3))"),
         ("xy + yx", "(2 * x * y)"),
