@@ -1,5 +1,16 @@
 use crate::interpreter::{eval, lexer::Lexer, parser::Parser};
 
+// #[test]
+// fn test_expr_ord() {
+//     let seq = ["x", "y", "z"];
+//     let seq = seq.map(|expr| {
+//         let l = Lexer::new(expr);
+//         let mut p = Parser::new(l);
+//         let expr = p.parse_expr_stmt();
+//         eval::eval_expr(expr)
+//     });
+// }
+
 #[test]
 fn test_add_expr() {
     let tests = [
