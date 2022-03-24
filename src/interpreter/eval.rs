@@ -18,6 +18,7 @@ pub fn eval_expr(e: ast::Expr) -> Expr {
                 eval_expr(*left) * eval_expr(*right)
             }
             ast::BinOp::Div => eval_expr(*left) / eval_expr(*right),
+            ast::BinOp::Pow => Expr::pow(eval_expr(*left), eval_expr(*right)),
         },
     }
 }

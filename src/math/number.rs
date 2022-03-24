@@ -38,12 +38,12 @@ impl Number {
         }
     }
 
-    pub fn is_positive(&self) -> bool {
-        match self {
-            Number::Int(i) => i > &0,
-            Number::Rat(n, _) => n > &0,
-        }
-    }
+    // pub fn is_positive(&self) -> bool {
+    //     match self {
+    //         Number::Int(i) => i > &0,
+    //         Number::Rat(n, _) => n > &0,
+    //     }
+    // }
 
     pub fn pow(self, exp: i32) -> Number {
         match (self, exp) {

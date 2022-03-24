@@ -10,6 +10,8 @@ enum Precedence {
     Prod,
     Unary,
     ImpliedMul,
+    RPow,
+    LPow,
 }
 
 pub struct Parser<'input> {
@@ -55,11 +57,11 @@ impl<'input> Parser<'input> {
 
         loop {
             match self.parse_binary_op() {
-                Some((op, p)) => {
-                    if precedence >= p {
+                Some((op, lp, rp)) => {
+                    if precedence >= lp {
                         break;
                     }
-                    left = self.parse_binary_expr(op, left, p);
+                    left = self.parse_binary_expr(op, left, rp);
                 }
                 None => match self.token {
                     Token::Num(_) | Token::Ident(_) | Token::Lparen => {
@@ -88,12 +90,23 @@ impl<'input> Parser<'input> {
         ast::Expr::Unary(op, Box::new(e))
     }
 
-    fn parse_binary_op(&self) -> Option<(ast::BinOp, Precedence)> {
+    fn parse_binary_op(&self) -> Option<(ast::BinOp, Precedence, Precedence)> {
         match self.token {
-            Token::Plus => Some((ast::BinOp::Add, Precedence::Sum)),
-            Token::Minus => Some((ast::BinOp::Sub, Precedence::Sum)),
-            Token::Asterisk => Some((ast::BinOp::Mul, Precedence::Prod)),
-            Token::Slash => Some((ast::BinOp::Div, Precedence::Prod)),
+            Token::Plus => {
+                Some((ast::BinOp::Add, Precedence::Sum, Precedence::Sum))
+            }
+            Token::Minus => {
+                Some((ast::BinOp::Sub, Precedence::Sum, Precedence::Sum))
+            }
+            Token::Star => {
+                Some((ast::BinOp::Mul, Precedence::Prod, Precedence::Prod))
+            }
+            Token::Slash => {
+                Some((ast::BinOp::Div, Precedence::Prod, Precedence::Prod))
+            }
+            Token::Caret => {
+                Some((ast::BinOp::Pow, Precedence::LPow, Precedence::RPow))
+            }
             _ => None,
         }
     }

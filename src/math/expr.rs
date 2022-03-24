@@ -54,9 +54,9 @@ impl Expr {
         Expr::Num(Number::int(i))
     }
 
-    pub fn rational(num: i32, den: i32) -> Expr {
-        Expr::Num(Number::rational(num, den))
-    }
+    // pub fn rational(num: i32, den: i32) -> Expr {
+    //     Expr::Num(Number::rational(num, den))
+    // }
 
     fn into_coeff_mul(self) -> (Number, Expr) {
         match self {

@@ -60,6 +60,26 @@ fn test_mul_expr() {
 }
 
 #[test]
+fn test_pow_expr() {
+    let tests = [
+        ("2 ^ 3", "8"),
+        ("3 ^ 2 ^ 2", "81"),
+        ("x * x", "(x ^ 2)"),
+        ("x * x * x", "(x ^ 3)"),
+        ("zyx3", "(3 * x * y * z)"),
+        ("zyx0", "0"),
+    ];
+
+    for (input, expected) in tests {
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let expr = p.parse_expr_stmt();
+        let expr = eval::eval_expr(expr);
+        assert_eq!(format!("{:?}", expr), expected);
+    }
+}
+
+#[test]
 fn test_expr() {
     let tests = [
         ("1 - 2", "-1"),
