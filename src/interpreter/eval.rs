@@ -5,7 +5,7 @@ pub fn eval_expr(e: ast::Expr) -> Expr {
     match e {
         ast::Expr::Num(s) => {
             let n: i32 = s.parse().unwrap();
-            Expr::Num(n)
+            Expr::int(n)
         }
         ast::Expr::Ident(s) => Expr::Sym(s.to_string()),
         ast::Expr::Unary(op, expr) => match op {
