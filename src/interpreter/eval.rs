@@ -1,6 +1,20 @@
 use super::ast;
 use crate::math::expr::{Expr, NEG_ONE};
 
+pub fn eval_stmt(s: ast::Stmt) -> String {
+    match s {
+        ast::Stmt::Expr(e) => {
+            let e = eval_expr(e);
+            format!("{:?}", e)
+        }
+        ast::Stmt::Let(l, r) => {
+            let l = eval_expr(l);
+            let r = eval_expr(r);
+            format!("\\let {:?} = {:?}", l, r)
+        }
+    }
+}
+
 pub fn eval_expr(e: ast::Expr) -> Expr {
     match e {
         ast::Expr::Num(s) => {

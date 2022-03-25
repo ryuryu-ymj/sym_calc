@@ -1,4 +1,16 @@
-use crate::interpreter::{eval, lexer::Lexer, parser::Parser};
+use super::*;
+use crate::interpreter::{ast, eval, lexer::Lexer, parser::Parser};
+
+fn parse_expr(input: &str) -> Expr {
+    let l = Lexer::new(input);
+    let mut p = Parser::new(l);
+    let expr = p.parse_stmt();
+    if let ast::Stmt::Expr(expr) = expr {
+        eval::eval_expr(expr)
+    } else {
+        panic!()
+    }
+}
 
 #[test]
 fn test_expr_ord() {
@@ -6,12 +18,7 @@ fn test_expr_ord() {
         "0", "1", "1/2", "1/3", "3/2", "x", "y", "z", "x + y", "x + z", "-1",
         "-x", "2x", "3x", "2y",
     ];
-    let seq = seq.map(|expr| {
-        let l = Lexer::new(expr);
-        let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
-        eval::eval_expr(expr)
-    });
+    let seq = seq.map(parse_expr);
     let mut seq = seq.iter();
     while let (Some(e), Some(f)) = (seq.next(), seq.next()) {
         assert!(e < f);
@@ -31,10 +38,7 @@ fn test_add_expr() {
     ];
 
     for (input, expected) in tests {
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
-        let expr = eval::eval_expr(expr);
+        let expr = parse_expr(input);
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -51,10 +55,7 @@ fn test_mul_expr() {
     ];
 
     for (input, expected) in tests {
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
-        let expr = eval::eval_expr(expr);
+        let expr = parse_expr(input);
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -71,10 +72,7 @@ fn test_pow_expr() {
     ];
 
     for (input, expected) in tests {
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
-        let expr = eval::eval_expr(expr);
+        let expr = parse_expr(input);
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -100,10 +98,7 @@ fn test_expr() {
     ];
 
     for (input, expected) in tests {
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
-        let expr = eval::eval_expr(expr);
+        let expr = parse_expr(input);
         assert_eq!(format!("{:?}", expr), expected);
     }
 }

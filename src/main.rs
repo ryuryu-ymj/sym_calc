@@ -11,8 +11,7 @@ fn main() {
             .expect("Failed to read line.");
         let l = Lexer::new(&input[..]);
         let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
-        let expr = eval::eval_expr(expr);
-        println!("{:?}", expr);
+        let stmt = p.parse_stmt();
+        println!("{}", eval::eval_stmt(stmt));
     }
 }

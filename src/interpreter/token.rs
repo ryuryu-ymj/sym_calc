@@ -9,6 +9,8 @@ pub enum Token<'a> {
     Caret,          // ^
     Lparen,         // (
     Rparen,         // )
+    Eq,             // =
+    Let,            // let
     Illegal,
     Eof,
 }

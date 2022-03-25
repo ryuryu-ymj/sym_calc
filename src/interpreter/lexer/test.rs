@@ -70,6 +70,10 @@ fn test_next_token() {
                 Token::Num("2"),
             ],
         ),
+        (
+            r"\let x = 3",
+            vec![Token::Let, Token::Ident("x"), Token::Eq, Token::Num("3")],
+        ),
     ];
 
     for (input, expected) in tests {

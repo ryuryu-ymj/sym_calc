@@ -6,6 +6,7 @@ mod test;
 #[derive(PartialEq, PartialOrd)]
 enum Precedence {
     Lowest,
+    Eq,
     Sum,
     Prod,
     Unary,
@@ -34,8 +35,27 @@ impl<'input> Parser<'input> {
         self.token = self.lexer.next_token();
     }
 
-    pub fn parse_expr_stmt(&mut self) -> ast::Expr<'input> {
-        self.parse_expr(Precedence::Lowest)
+    pub fn parse_stmt(&mut self) -> ast::Stmt<'input> {
+        if self.token == Token::Let {
+            self.parse_let_stmt()
+        } else {
+            self.parse_expr_stmt()
+        }
+    }
+
+    fn parse_let_stmt(&mut self) -> ast::Stmt<'input> {
+        self.bump();
+        let lhs = self.parse_expr(Precedence::Eq);
+        if self.token != Token::Eq {
+            panic!("parsing error");
+        }
+        self.bump();
+        let rhs = self.parse_expr(Precedence::Lowest);
+        ast::Stmt::Let(lhs, rhs)
+    }
+
+    fn parse_expr_stmt(&mut self) -> ast::Stmt<'input> {
+        ast::Stmt::Expr(self.parse_expr(Precedence::Lowest))
     }
 
     fn parse_expr(&mut self, precedence: Precedence) -> ast::Expr<'input> {
@@ -90,6 +110,7 @@ impl<'input> Parser<'input> {
         ast::Expr::Unary(op, Box::new(e))
     }
 
+    /// Parse binary operator and return it and its left and right precedence.
     fn parse_binary_op(&self) -> Option<(ast::BinOp, Precedence, Precedence)> {
         match self.token {
             Token::Plus => {

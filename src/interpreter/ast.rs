@@ -1,6 +1,10 @@
 use std::fmt;
 
-#[derive(PartialEq)]
+pub enum Stmt<'input> {
+    Expr(Expr<'input>),
+    Let(Expr<'input>, Expr<'input>),
+}
+
 pub enum Expr<'input> {
     Num(&'input str),
     Ident(&'input str),
@@ -8,12 +12,10 @@ pub enum Expr<'input> {
     Binary(BinOp, Box<Expr<'input>>, Box<Expr<'input>>),
 }
 
-#[derive(PartialEq)]
 pub enum UnOp {
     Neg,
 }
 
-#[derive(PartialEq)]
 pub enum BinOp {
     Add,
     Sub,
@@ -21,6 +23,15 @@ pub enum BinOp {
     Div,
     ImpliedMul,
     Pow,
+}
+
+impl fmt::Debug for Stmt<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Stmt::Expr(e) => write!(f, "{:?}", e),
+            Stmt::Let(l, r) => write!(f, "\\let ({:?}) = ({:?})", l, r),
+        }
+    }
 }
 
 impl fmt::Debug for Expr<'_> {

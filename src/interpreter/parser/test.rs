@@ -14,7 +14,7 @@ fn test_parse_binary_expr() {
     for (input, expected) in tests {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
+        let expr = p.parse_stmt();
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -26,7 +26,7 @@ fn test_parse_unary_expr() {
     for (input, expected) in tests {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
+        let expr = p.parse_stmt();
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -38,7 +38,7 @@ fn test_parse_grouped_expr() {
     for (input, expected) in tests {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
+        let expr = p.parse_stmt();
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -53,7 +53,7 @@ fn test_parse_implied_mul_expr() {
     for (input, expected) in tests {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
+        let expr = p.parse_stmt();
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
@@ -71,7 +71,7 @@ fn test_parse_expr() {
     for (input, expected) in tests {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
-        let expr = p.parse_expr_stmt();
+        let expr = p.parse_stmt();
         assert_eq!(format!("{:?}", expr), expected);
     }
 }

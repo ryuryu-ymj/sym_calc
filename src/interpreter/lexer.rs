@@ -31,8 +31,9 @@ impl<'input> Lexer<'input> {
                     '^' => return Token::Caret,
                     '(' => return Token::Lparen,
                     ')' => return Token::Rparen,
+                    '=' => return Token::Eq,
                     '0'..='9' => return self.read_number(i),
-                    '\\' => return self.read_identifier(i),
+                    '\\' => return self.read_word(i),
                     'a'..='z' | 'A'..='Z' => {
                         return Token::Ident(&self.input[i..i + 1])
                     }
@@ -57,19 +58,27 @@ impl<'input> Lexer<'input> {
         }
     }
 
-    fn read_identifier(&mut self, pos: usize) -> Token<'input> {
+    fn read_word(&mut self, pos: usize) -> Token<'input> {
         loop {
             match self.chars.peek() {
-                None => return Token::Ident(&self.input[pos..]),
+                None => return Lexer::word_to_token(&self.input[pos..]),
                 Some((j, c)) => match *c {
                     'a'..='z' | 'A'..='Z' => {
                         self.chars.next();
                     }
                     _ => {
-                        return Token::Ident(&self.input[pos..*j]);
+                        return Lexer::word_to_token(&self.input[pos..*j]);
                     }
                 },
             }
+        }
+    }
+
+    fn word_to_token(s: &'input str) -> Token<'input> {
+        if s == "\\let" {
+            Token::Let
+        } else {
+            Token::Ident(s)
         }
     }
 }
