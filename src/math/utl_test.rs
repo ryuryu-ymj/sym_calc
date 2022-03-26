@@ -1,21 +1,7 @@
-use super::ast;
-use crate::math::expr::{Expr, NEG_ONE};
+use super::expr::{Expr, NEG_ONE};
+use crate::interpreter::{ast, lexer::Lexer, parser::Parser};
 
-pub fn eval_stmt(s: ast::Stmt) -> String {
-    match s {
-        ast::Stmt::Expr(e) => {
-            let e = eval_expr(e);
-            format!("{:?}", e)
-        }
-        ast::Stmt::Let(l, r) => {
-            let l = eval_expr(l);
-            let r = eval_expr(r);
-            format!("\\let {:?} = {:?}", l, r)
-        }
-    }
-}
-
-pub fn eval_expr(e: ast::Expr) -> Expr {
+fn eval_expr(e: ast::Expr) -> Expr {
     match e {
         ast::Expr::Num(s) => {
             let n: i32 = s.parse().unwrap();
@@ -34,5 +20,16 @@ pub fn eval_expr(e: ast::Expr) -> Expr {
             ast::BinOp::Div => eval_expr(*left) / eval_expr(*right),
             ast::BinOp::Pow => Expr::pow(eval_expr(*left), eval_expr(*right)),
         },
+    }
+}
+
+pub fn parse_expr(input: &str) -> Expr {
+    let l = Lexer::new(input);
+    let mut p = Parser::new(l);
+    let expr = p.parse_stmt();
+    if let ast::Stmt::Expr(expr) = expr {
+        eval_expr(expr)
+    } else {
+        panic!()
     }
 }

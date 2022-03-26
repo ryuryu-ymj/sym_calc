@@ -1,16 +1,4 @@
-use super::*;
-use crate::interpreter::{ast, eval, lexer::Lexer, parser::Parser};
-
-fn parse_expr(input: &str) -> Expr {
-    let l = Lexer::new(input);
-    let mut p = Parser::new(l);
-    let expr = p.parse_stmt();
-    if let ast::Stmt::Expr(expr) = expr {
-        eval::eval_expr(expr)
-    } else {
-        panic!()
-    }
-}
+use super::super::utl_test::*;
 
 #[test]
 fn test_expr_ord() {
