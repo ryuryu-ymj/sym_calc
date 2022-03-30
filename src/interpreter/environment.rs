@@ -19,7 +19,7 @@ impl Environment {
     pub fn get(&self, s: &str) -> Expr {
         self.store
             .get(s)
-            .and_then(|e| Some(e.clone()))
+            .cloned()
             .unwrap_or_else(|| Expr::Sym(s.to_string()))
     }
 }

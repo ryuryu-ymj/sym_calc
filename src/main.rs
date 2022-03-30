@@ -25,7 +25,7 @@ fn main() -> std::io::Result<()> {
         let mut p = Parser::new(l);
         let stmt = p.parse_stmt();
         let out = evaluator::eval_stmt(stmt, &mut env);
-        if out != "" {
+        if !out.is_empty() {
             println!("{}", out);
         }
     }
