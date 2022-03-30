@@ -1,18 +1,18 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use super::number::{self, Number};
+use super::num::{self, Num};
 
 #[cfg(test)]
 mod test;
 
-pub const ZERO: Expr = Expr::Num(number::ZERO);
-pub const ONE: Expr = Expr::Num(number::ONE);
-pub const NEG_ONE: Expr = Expr::Num(number::NEG_ONE);
+pub const ZERO: Expr = Expr::Num(num::ZERO);
+pub const ONE: Expr = Expr::Num(num::ONE);
+pub const NEG_ONE: Expr = Expr::Num(num::NEG_ONE);
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum Expr {
-    Num(Number),
+    Num(Num),
     Sym(String),
     Add(Add),
     Mul(Mul),
@@ -51,18 +51,18 @@ fn fmt_expr_list(
 
 impl Expr {
     pub fn int(i: i32) -> Expr {
-        Expr::Num(Number::int(i))
+        Expr::Num(Num::int(i))
     }
 
     // pub fn rational(num: i32, den: i32) -> Expr {
     //     Expr::Num(Number::rational(num, den))
     // }
 
-    fn into_coeff_mul(self) -> (Number, Expr) {
+    fn into_coeff_mul(self) -> (Num, Expr) {
         match self {
             Expr::Num(n) => (n, ONE),
             e @ Expr::Sym(_) | e @ Expr::Add(_) | e @ Expr::Pow(_, _) => {
-                (number::ONE, e)
+                (num::ONE, e)
             }
             Expr::Mul(m) => m.into_coeff_mul(),
         }
@@ -75,7 +75,7 @@ impl Expr {
             (base, ONE) => base,
             (ZERO, _) => ZERO,
             (ONE, _) => ONE,
-            (Expr::Num(base), Expr::Num(Number::Int(exp))) => {
+            (Expr::Num(base), Expr::Num(Num::Int(exp))) => {
                 Expr::Num(base.pow(exp))
             }
             (Expr::Mul(mul), exp @ Expr::Num(_)) => {
@@ -121,8 +121,8 @@ impl std::ops::Div for Expr {
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Add {
-    terms: BTreeMap<Expr, Number>,
-    coeff: Number,
+    terms: BTreeMap<Expr, Num>,
+    coeff: Num,
 }
 
 impl Default for Add {
@@ -134,7 +134,7 @@ impl Default for Add {
 impl Add {
     fn new() -> Add {
         Add {
-            coeff: number::ZERO,
+            coeff: num::ZERO,
             terms: BTreeMap::new(),
         }
     }
@@ -144,17 +144,17 @@ impl Add {
         for (e, c) in self.terms {
             args.push(Expr::Num(c) * e)
         }
-        if self.coeff != number::ZERO {
+        if self.coeff != num::ZERO {
             args.push(Expr::Num(self.coeff));
         }
         args
     }
 
     fn into_expr(mut self) -> Expr {
-        self.terms.retain(|_, c| *c != number::ZERO);
+        self.terms.retain(|_, c| *c != num::ZERO);
         if self.terms.is_empty() {
             return Expr::Num(self.coeff);
-        } else if self.coeff == number::ZERO && self.terms.len() == 1 {
+        } else if self.coeff == num::ZERO && self.terms.len() == 1 {
             let (e, c) = self.terms.into_iter().next().unwrap();
             return Expr::Num(c) * e;
         }
@@ -176,40 +176,40 @@ impl Add {
                     std::mem::swap(&mut self.terms, &mut other.terms);
                 } else {
                     for (e, c) in other.terms {
-                        *self.terms.entry(e).or_insert(number::ZERO) += c;
+                        *self.terms.entry(e).or_insert(num::ZERO) += c;
                     }
                 }
             }
             Expr::Num(n) => self.coeff += n,
             e => {
                 let (c, e) = e.into_coeff_mul();
-                *self.terms.entry(e).or_insert(number::ZERO) += c;
+                *self.terms.entry(e).or_insert(num::ZERO) += c;
             }
         }
     }
 
     fn is_zero(&self) -> bool {
-        self.coeff == number::ZERO && self.terms.is_empty()
+        self.coeff == num::ZERO && self.terms.is_empty()
     }
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Mul {
     terms: BTreeMap<Expr, Add>,
-    coeff: Number,
+    coeff: Num,
 }
 
 impl Mul {
     fn new() -> Mul {
         Mul {
-            coeff: number::ONE,
+            coeff: num::ONE,
             terms: BTreeMap::new(),
         }
     }
 
     fn into_args(self) -> Vec<Expr> {
         let mut args = Vec::new();
-        if self.coeff != number::ONE {
+        if self.coeff != num::ONE {
             args.push(Expr::Num(self.coeff));
         }
         for (e, c) in self.terms {
@@ -220,11 +220,11 @@ impl Mul {
 
     fn into_expr(mut self) -> Expr {
         self.terms.retain(|_, c| !c.is_zero());
-        if self.coeff == number::ZERO {
+        if self.coeff == num::ZERO {
             return ZERO;
         } else if self.terms.is_empty() {
             return Expr::Num(self.coeff);
-        } else if self.coeff == number::ONE && self.terms.len() == 1 {
+        } else if self.coeff == num::ONE && self.terms.len() == 1 {
             let (e, c) = self.terms.into_iter().next().unwrap();
             return Expr::pow(e, c.into_expr());
         }
@@ -239,7 +239,7 @@ impl Mul {
     }
 
     fn mul_assign(&mut self, other: Expr) {
-        if self.coeff != number::ZERO {
+        if self.coeff != num::ZERO {
             match other {
                 Expr::Mul(mut other) => {
                     self.coeff *= other.coeff;
@@ -265,9 +265,9 @@ impl Mul {
         }
     }
 
-    fn into_coeff_mul(mut self) -> (Number, Expr) {
+    fn into_coeff_mul(mut self) -> (Num, Expr) {
         let c = self.coeff;
-        self.coeff = number::ONE;
+        self.coeff = num::ONE;
         (c, self.into_expr())
     }
 }

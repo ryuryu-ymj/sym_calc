@@ -12,8 +12,8 @@ impl Environment {
         }
     }
 
-    pub fn set(&mut self, s: String, e: Expr) {
-        self.store.insert(s, e);
+    pub fn set(&mut self, s: &str, e: Expr) {
+        self.store.insert(s.to_string(), e);
     }
 
     pub fn get(&self, s: &str) -> Expr {

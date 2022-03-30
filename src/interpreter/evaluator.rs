@@ -12,11 +12,16 @@ pub fn eval_stmt(stmt: ast::Stmt, env: &mut Environment) -> String {
             format!("{:?}", e)
         }
         ast::Stmt::Let(l, r) => {
-            let l = eval_expr(l, None);
             let r = eval_expr(r, Some(env));
             let ret = format!("\\let {:?} = {:?}", l, r);
             match l {
-                Expr::Sym(s) => env.set(s, r),
+                ast::Expr::Ident(s) => env.set(s, r),
+                ast::Expr::Binary(ast::BinOp::ImpliedMul, l, r) => {
+                    if let (ast::Expr::Ident(f), ast::Expr::Ident(x)) = (*l, *r)
+                    {
+                        todo!()
+                    }
+                }
                 _ => {}
             }
             ret
