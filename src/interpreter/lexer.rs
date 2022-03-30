@@ -33,6 +33,7 @@ impl<'input> Lexer<'input> {
                     '(' => return Token::Lparen,
                     ')' => return Token::Rparen,
                     '=' => return Token::Eq,
+                    ',' => return Token::Comma,
                     '0'..='9' => return self.read_number(i),
                     '\\' => return self.read_word(i),
                     'a'..='z' | 'A'..='Z' => {

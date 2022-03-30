@@ -11,6 +11,7 @@ pub enum Expr<'input> {
     Ident(&'input str),
     Unary(UnOp, Box<Expr<'input>>),
     Binary(BinOp, Box<Expr<'input>>, Box<Expr<'input>>),
+    List(Vec<Expr<'input>>),
 }
 
 pub enum UnOp {
@@ -43,6 +44,19 @@ impl fmt::Debug for Expr<'_> {
             Expr::Unary(op, e) => write!(f, "({:?} {:?})", op, **e),
             Expr::Binary(op, l, r) => {
                 write!(f, "({:?} {:?} {:?})", **l, op, **r)
+            }
+            Expr::List(v) => {
+                let mut i = v.iter();
+                if let Some(e) = i.next() {
+                    let mut r = write!(f, "({:?}", e);
+                    for e in i {
+                        r = r.and_then(|_| write!(f, ", {:?}", e));
+                    }
+                    r = r.and_then(|_| write!(f, ")"));
+                    r
+                } else {
+                    Ok(())
+                }
             }
         }
     }

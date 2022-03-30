@@ -20,6 +20,10 @@ fn eval_expr(e: ast::Expr) -> Expr {
             ast::BinOp::Div => eval_expr(*left) / eval_expr(*right),
             ast::BinOp::Pow => Expr::pow(eval_expr(*left), eval_expr(*right)),
         },
+        ast::Expr::List(v) => {
+            let v = v.into_iter().map(|e| eval_expr(e)).collect();
+            Expr::Vec(v)
+        }
     }
 }
 

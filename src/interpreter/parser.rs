@@ -146,11 +146,33 @@ impl<'input> Parser<'input> {
     fn parse_grouped_expr(&mut self) -> ast::Expr<'input> {
         self.bump();
         let e = self.parse_expr(Precedence::Lowest);
-        if self.token != Token::Rparen {
-            panic!("No corresponding right parentheses.");
+        match self.token {
+            Token::Rparen => {
+                self.bump();
+                e
+            }
+            Token::Comma => {
+                self.bump();
+                let mut v = vec![e];
+                loop {
+                    let e = self.parse_expr(Precedence::Lowest);
+                    match self.token {
+                        Token::Rparen => {
+                            self.bump();
+                            v.push(e);
+                            break;
+                        }
+                        Token::Comma => {
+                            self.bump();
+                            v.push(e);
+                        }
+                        _ => panic!("No corresponding right parentheses."),
+                    }
+                }
+                ast::Expr::List(v)
+            }
+            _ => panic!("No corresponding right parentheses."),
         }
-        self.bump();
-        e
     }
 
     fn parse_implied_mul_expr(

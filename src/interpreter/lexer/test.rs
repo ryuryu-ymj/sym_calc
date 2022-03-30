@@ -78,6 +78,16 @@ fn test_next_token() {
             r"\let x = 3",
             vec![Token::Let, Token::Ident("x"), Token::Eq, Token::Num("3")],
         ),
+        (
+            "(1, x)",
+            vec![
+                Token::Lparen,
+                Token::Num("1"),
+                Token::Comma,
+                Token::Ident("x"),
+                Token::Rparen,
+            ],
+        ),
     ];
 
     for (input, expected) in tests {

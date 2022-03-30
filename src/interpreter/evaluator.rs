@@ -16,12 +16,12 @@ pub fn eval_stmt(stmt: ast::Stmt, env: &mut Environment) -> String {
             let ret = format!("\\let {:?} = {:?}", l, r);
             match l {
                 ast::Expr::Ident(s) => env.set(s, r),
-                ast::Expr::Binary(ast::BinOp::ImpliedMul, l, r) => {
-                    if let (ast::Expr::Ident(f), ast::Expr::Ident(x)) = (*l, *r)
-                    {
-                        todo!()
-                    }
-                }
+                // ast::Expr::Binary(ast::BinOp::ImpliedMul, l, r) => {
+                //     if let (ast::Expr::Ident(f), ast::Expr::Ident(x)) = (*l, *r)
+                //     {
+                //         todo!()
+                //     }
+                // }
                 _ => {}
             }
             ret
@@ -53,6 +53,10 @@ fn eval_expr(e: ast::Expr, env: Option<&Environment>) -> Expr {
                 Expr::pow(eval_expr(*left, env), eval_expr(*right, env))
             }
         },
+        ast::Expr::List(v) => {
+            let v = v.into_iter().map(|e| eval_expr(e, env)).collect();
+            Expr::Vec(v)
+        }
     }
 }
 

@@ -75,3 +75,20 @@ fn test_parse_expr() {
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
+
+#[test]
+fn test_parse_list_expr() {
+    let tests = [
+        ("(10, 3, -4)", "(10, 3, (- 4))"),
+        ("(a, xy, p*q+3)", "(a, (x im y), ((p * q) + 3))"),
+        ("((1, 2), (3))", "((1, 2), 3)"),
+        ("3(x, y) + (2, 1)", "((3 im (x, y)) + (2, 1))"),
+    ];
+
+    for (input, expected) in tests {
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let expr = p.parse_stmt();
+        assert_eq!(format!("{:?}", expr), expected);
+    }
+}

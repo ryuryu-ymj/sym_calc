@@ -17,6 +17,7 @@ pub enum Expr {
     Add(Add),
     Mul(Mul),
     Pow(Box<Expr>, Box<Expr>),
+    Vec(Vec<Expr>),
 }
 
 impl fmt::Debug for Expr {
@@ -24,9 +25,10 @@ impl fmt::Debug for Expr {
         match self {
             Expr::Num(n) => write!(f, "{:?}", n),
             Expr::Sym(s) => write!(f, "{}", s),
-            Expr::Add(a) => fmt_expr_list(f, &a.clone().into_args(), '+'),
-            Expr::Mul(m) => fmt_expr_list(f, &m.clone().into_args(), '*'),
+            Expr::Add(a) => fmt_expr_list(f, &a.clone().into_args(), " + "),
+            Expr::Mul(m) => fmt_expr_list(f, &m.clone().into_args(), " * "),
             Expr::Pow(b, e) => write!(f, "({:?} ^ {:?})", b, e),
+            Expr::Vec(v) => fmt_expr_list(f, &v, ", "),
         }
     }
 }
@@ -34,13 +36,13 @@ impl fmt::Debug for Expr {
 fn fmt_expr_list(
     f: &mut fmt::Formatter<'_>,
     v: &[Expr],
-    op: char,
+    sp: &str,
 ) -> fmt::Result {
     let mut i = v.iter();
     if let Some(e) = i.next() {
         let mut r = write!(f, "({:?}", e);
         for e in i {
-            r = r.and_then(|_| write!(f, " {} {:?}", op, e));
+            r = r.and_then(|_| write!(f, "{}{:?}", sp, e));
         }
         r = r.and_then(|_| write!(f, ")"));
         r
@@ -61,9 +63,10 @@ impl Expr {
     fn into_coeff_mul(self) -> (Num, Expr) {
         match self {
             Expr::Num(n) => (n, ONE),
-            e @ Expr::Sym(_) | e @ Expr::Add(_) | e @ Expr::Pow(_, _) => {
-                (num::ONE, e)
-            }
+            e @ Expr::Sym(_)
+            | e @ Expr::Add(_)
+            | e @ Expr::Pow(_, _)
+            | e @ Expr::Vec(_) => (num::ONE, e),
             Expr::Mul(m) => m.into_coeff_mul(),
         }
     }

@@ -10,6 +10,7 @@ pub enum Token<'a> {
     Lparen,         // (
     Rparen,         // )
     Eq,             // =
+    Comma,          // ,
     Let,            // let
     Illegal,
     LF,
