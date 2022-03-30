@@ -13,9 +13,13 @@ fn main() -> std::io::Result<()> {
         std::io::stdout().flush()?;
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
-        if input == "" {
-            println!();
-            break Ok(());
+        match input.as_str() {
+            "" => {
+                println!();
+                break Ok(());
+            }
+            "\\quit\n" => break Ok(()),
+            _ => {}
         }
         let l = Lexer::new(&input);
         let mut p = Parser::new(l);
