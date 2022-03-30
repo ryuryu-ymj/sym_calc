@@ -12,5 +12,6 @@ pub enum Token<'a> {
     Eq,             // =
     Let,            // let
     Illegal,
+    LF,
     Eof,
 }

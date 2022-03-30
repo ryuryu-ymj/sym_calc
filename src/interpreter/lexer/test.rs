@@ -5,27 +5,29 @@ use super::*;
 fn test_next_token() {
     let tests = [
         (
-            "10+2*393",
+            "10+2*393\n",
             vec![
                 Token::Num("10"),
                 Token::Plus,
                 Token::Num("2"),
                 Token::Star,
                 Token::Num("393"),
+                Token::LF,
             ],
         ),
         (
-            "\t10  +  2 * 393",
+            "\t10  +  2 * 393\n",
             vec![
                 Token::Num("10"),
                 Token::Plus,
                 Token::Num("2"),
                 Token::Star,
                 Token::Num("393"),
+                Token::LF,
             ],
         ),
         (
-            "(10 - 2) / 393",
+            "(10 - 2) / 393\n",
             vec![
                 Token::Lparen,
                 Token::Num("10"),
@@ -34,10 +36,11 @@ fn test_next_token() {
                 Token::Rparen,
                 Token::Slash,
                 Token::Num("393"),
+                Token::LF,
             ],
         ),
         (
-            "ab c*de",
+            "ab c*de\n",
             vec![
                 Token::Ident("a"),
                 Token::Ident("b"),
@@ -45,6 +48,7 @@ fn test_next_token() {
                 Token::Star,
                 Token::Ident("d"),
                 Token::Ident("e"),
+                Token::LF,
             ],
         ),
         (
@@ -78,9 +82,13 @@ fn test_next_token() {
 
     for (input, expected) in tests {
         let mut l = Lexer::new(input);
-        for e in expected {
+        let mut e = expected.into_iter();
+        loop {
             let tok = l.next_token();
-            assert_eq!(tok, e);
+            if tok == Token::Eof {
+                break;
+            }
+            assert_eq!(Some(tok), e.next());
         }
     }
 }

@@ -36,10 +36,10 @@ impl<'input> Parser<'input> {
     }
 
     pub fn parse_stmt(&mut self) -> ast::Stmt<'input> {
-        if self.token == Token::Let {
-            self.parse_let_stmt()
-        } else {
-            self.parse_expr_stmt()
+        match self.token {
+            Token::Eof | Token::LF => ast::Stmt::Empty,
+            Token::Let => self.parse_let_stmt(),
+            _ => self.parse_expr_stmt(),
         }
     }
 

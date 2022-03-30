@@ -24,6 +24,7 @@ impl<'input> Lexer<'input> {
                 None => return Token::Eof,
                 Some((i, c)) => match c {
                     ' ' | '\t' => continue,
+                    '\n' => return Token::LF,
                     '+' => return Token::Plus,
                     '-' => return Token::Minus,
                     '*' => return Token::Star,

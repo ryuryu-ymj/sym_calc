@@ -1,6 +1,7 @@
 use std::fmt;
 
 pub enum Stmt<'input> {
+    Empty,
     Expr(Expr<'input>),
     Let(Expr<'input>, Expr<'input>),
 }
@@ -28,6 +29,7 @@ pub enum BinOp {
 impl fmt::Debug for Stmt<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Stmt::Empty => Ok(()),
             Stmt::Expr(e) => write!(f, "{:?}", e),
             Stmt::Let(l, r) => write!(f, "\\let ({:?}) = ({:?})", l, r),
         }

@@ -6,6 +6,7 @@ mod test;
 
 pub fn eval_stmt(stmt: ast::Stmt, env: &mut Environment) -> String {
     match stmt {
+        ast::Stmt::Empty => String::new(),
         ast::Stmt::Expr(e) => {
             let e = eval_expr(e, Some(env));
             format!("{:?}", e)
