@@ -90,3 +90,27 @@ fn test_expr() {
         assert_eq!(format!("{:?}", expr), expected);
     }
 }
+
+#[test]
+fn test_vec_expr() {
+    let tests = [
+        ("(1 + 2, x + x, yy)", "(3, (2 * x), (y ^ 2))"),
+        ("(1, 2) + (2, 3)", "(3, 5)"),
+        (
+            "(1, 2) + (2, 3, 4)",
+            "unsupported operand: +: \\R^2 x \\R^3 -> ?",
+        ),
+        ("(1, 2) + 3", "unsupported operand"),
+        ("(x, y) + (x, z)", "((2 * x), (y + z))"),
+        ("(1, 2) * 3", "(3, 6)"),
+        ("3(x, y)", "((3 * x), (3 * y))"),
+        ("(1,2)(3,y)", "unsupported operand"),
+        ("0^(3,y)", "unsupported operand"),
+        ("(3,y)^0", "unsupported operand"),
+    ];
+
+    for (input, expected) in tests {
+        let expr = parse_expr(input);
+        assert_eq!(format!("{:?}", expr), expected);
+    }
+}

@@ -18,6 +18,7 @@ pub enum Expr {
     Mul(Mul),
     Pow(Box<Expr>, Box<Expr>),
     Vec(Vec<Expr>),
+    Err(String),
 }
 
 impl fmt::Debug for Expr {
@@ -28,7 +29,8 @@ impl fmt::Debug for Expr {
             Expr::Add(a) => fmt_expr_list(f, &a.clone().into_args(), " + "),
             Expr::Mul(m) => fmt_expr_list(f, &m.clone().into_args(), " * "),
             Expr::Pow(b, e) => write!(f, "({:?} ^ {:?})", b, e),
-            Expr::Vec(v) => fmt_expr_list(f, &v, ", "),
+            Expr::Vec(v) => fmt_expr_list(f, v, ", "),
+            Expr::Err(s) => write!(f, "{}", s),
         }
     }
 }
@@ -51,6 +53,12 @@ fn fmt_expr_list(
     }
 }
 
+impl Default for Expr {
+    fn default() -> Self {
+        ZERO
+    }
+}
+
 impl Expr {
     pub fn int(i: i32) -> Expr {
         Expr::Num(Num::int(i))
@@ -63,17 +71,23 @@ impl Expr {
     fn into_coeff_mul(self) -> (Num, Expr) {
         match self {
             Expr::Num(n) => (n, ONE),
-            e @ Expr::Sym(_)
-            | e @ Expr::Add(_)
-            | e @ Expr::Pow(_, _)
-            | e @ Expr::Vec(_) => (num::ONE, e),
             Expr::Mul(m) => m.into_coeff_mul(),
+            e => (num::ONE, e),
         }
     }
 
     pub fn pow(self, exp: Expr) -> Expr {
         // TODO: 0^0 = 1?
         match (self, exp) {
+            (Expr::Err(mut s1), Expr::Err(s2)) => {
+                s1.push('\n');
+                s1.push_str(&s2);
+                Expr::Err(s1)
+            }
+            (Expr::Vec(_), _) | (_, Expr::Vec(_)) => {
+                let s = String::from("unsupported operand");
+                Expr::Err(s)
+            }
             (_, ZERO) => ONE,
             (base, ONE) => base,
             (ZERO, _) => ZERO,
@@ -82,11 +96,11 @@ impl Expr {
                 Expr::Num(base.pow(exp))
             }
             (Expr::Mul(mul), exp @ Expr::Num(_)) => {
-                let mut ret = ONE;
+                let mut m = Mul::new();
                 for e in mul.into_args() {
-                    ret = ret * (Expr::pow(e, exp.clone()));
+                    m.mul_assign(Expr::pow(e, exp.clone()));
                 }
-                ret
+                m.into_expr()
             }
             (Expr::Pow(base, exp2), exp1) => Expr::pow(*base, *exp2 * exp1),
             (base, exp) => Expr::Pow(Box::new(base), Box::new(exp)),
@@ -97,7 +111,41 @@ impl Expr {
 impl std::ops::Add for Expr {
     type Output = Expr;
     fn add(self, rhs: Self) -> Self::Output {
-        Add::add(self, rhs).into_expr()
+        match (self, rhs) {
+            (Expr::Err(mut s1), Expr::Err(s2)) => {
+                s1.push('\n');
+                s1.push_str(&s2);
+                Expr::Err(s1)
+            }
+            (e @ Expr::Err(_), _) | (_, e @ Expr::Err(_)) => e,
+            (Expr::Vec(mut v1), Expr::Vec(v2)) if v1.len() == v2.len() => {
+                for (e1, e2) in v1.iter_mut().zip(v2.into_iter()) {
+                    *e1 += e2;
+                }
+                Expr::Vec(v1)
+            }
+            (Expr::Vec(v1), Expr::Vec(v2)) => Expr::Err(format!(
+                "unsupported operand: +: \\R^{} x \\R^{} -> ?",
+                v1.len(),
+                v2.len()
+            )),
+            (Expr::Vec(_), _) | (_, Expr::Vec(_)) => {
+                let s = String::from("unsupported operand");
+                Expr::Err(s)
+            }
+            (e1, e2) => {
+                let mut a = Add::new();
+                a.add_assign(e1);
+                a.add_assign(e2);
+                a.into_expr()
+            }
+        }
+    }
+}
+
+impl std::ops::AddAssign for Expr {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = std::mem::take(self) + rhs;
     }
 }
 
@@ -111,7 +159,35 @@ impl std::ops::Sub for Expr {
 impl std::ops::Mul for Expr {
     type Output = Expr;
     fn mul(self, rhs: Self) -> Self::Output {
-        Mul::mul(self, rhs).into_expr()
+        match (self, rhs) {
+            (Expr::Err(mut s1), Expr::Err(s2)) => {
+                s1.push('\n');
+                s1.push_str(&s2);
+                Expr::Err(s1)
+            }
+            (Expr::Vec(_), Expr::Vec(_)) => {
+                let s = String::from("unsupported operand");
+                Expr::Err(s)
+            }
+            (Expr::Vec(mut v), c) | (c, Expr::Vec(mut v)) => {
+                for e in &mut v {
+                    *e *= c.clone();
+                }
+                Expr::Vec(v)
+            }
+            (e1, e2) => {
+                let mut m = Mul::new();
+                m.mul_assign(e1);
+                m.mul_assign(e2);
+                m.into_expr()
+            }
+        }
+    }
+}
+
+impl std::ops::MulAssign for Expr {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = std::mem::take(self) * rhs;
     }
 }
 
@@ -162,13 +238,6 @@ impl Add {
             return Expr::Num(c) * e;
         }
         Expr::Add(self)
-    }
-
-    fn add(left: Expr, right: Expr) -> Add {
-        let mut a = Add::new();
-        a.add_assign(left);
-        a.add_assign(right);
-        a
     }
 
     fn add_assign(&mut self, other: Expr) {
@@ -232,13 +301,6 @@ impl Mul {
             return Expr::pow(e, c.into_expr());
         }
         Expr::Mul(self)
-    }
-
-    fn mul(left: Expr, right: Expr) -> Mul {
-        let mut m = Mul::new();
-        m.mul_assign(left);
-        m.mul_assign(right);
-        m
     }
 
     fn mul_assign(&mut self, other: Expr) {
