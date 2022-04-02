@@ -95,16 +95,36 @@ impl Expr {
             (Expr::Num(base), Expr::Num(Num::Int(exp))) => {
                 Expr::Num(base.pow(exp))
             }
-            (Expr::Mul(mul), exp @ Expr::Num(_)) => {
-                let mut m = Mul::new();
-                for e in mul.into_args() {
-                    m.mul_assign(Expr::pow(e, exp.clone()));
-                }
-                m.into_expr()
-            }
+            (Expr::Mul(mul), exp @ Expr::Num(_)) => Expr::prod(
+                mul.into_args()
+                    .into_iter()
+                    .map(|e| Expr::pow(e, exp.clone())),
+            ),
             (Expr::Pow(base, exp2), exp1) => Expr::pow(*base, *exp2 * exp1),
             (base, exp) => Expr::Pow(Box::new(base), Box::new(exp)),
         }
+    }
+
+    pub fn sum<I>(iter: I) -> Expr
+    where
+        I: IntoIterator<Item = Expr>,
+    {
+        let mut a = Add::new();
+        for e in iter {
+            a.add_assign(e);
+        }
+        a.into_expr()
+    }
+
+    pub fn prod<I>(iter: I) -> Expr
+    where
+        I: IntoIterator<Item = Expr>,
+    {
+        let mut m = Mul::new();
+        for e in iter {
+            m.mul_assign(e);
+        }
+        m.into_expr()
     }
 }
 
@@ -218,7 +238,7 @@ impl Add {
         }
     }
 
-    fn into_args(self) -> Vec<Expr> {
+    pub fn into_args(self) -> Vec<Expr> {
         let mut args = Vec::new();
         for (e, c) in self.terms {
             args.push(Expr::Num(c) * e)
@@ -279,7 +299,7 @@ impl Mul {
         }
     }
 
-    fn into_args(self) -> Vec<Expr> {
+    pub fn into_args(self) -> Vec<Expr> {
         let mut args = Vec::new();
         if self.coeff != num::ONE {
             args.push(Expr::Num(self.coeff));
