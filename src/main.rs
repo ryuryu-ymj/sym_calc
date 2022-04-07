@@ -7,7 +7,7 @@ use interpreter::{
 use std::io::Write;
 
 fn main() -> std::io::Result<()> {
-    let mut env = Environment::new();
+    let mut env = Environment::default();
     loop {
         print!(">> ");
         std::io::stdout().flush()?;

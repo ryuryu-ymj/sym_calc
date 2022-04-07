@@ -1,4 +1,4 @@
-use math::expr::Expr;
+use crate::math::expr::Expr;
 use std::collections::HashMap;
 
 pub struct Environment {
@@ -10,6 +10,12 @@ impl Environment {
         Environment {
             store: HashMap::new(),
         }
+    }
+
+    pub fn default() -> Environment {
+        let mut env = Environment::new();
+        env.set("\\diff", crate::math::diff::CMD_DIFF);
+        env
     }
 
     pub fn set(&mut self, s: &str, e: Expr) {

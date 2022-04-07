@@ -2,6 +2,9 @@ use super::expr::{Expr, ONE, ZERO};
 
 #[cfg(test)]
 mod test;
+
+pub const CMD_DIFF: Expr = Expr::Cmd("\\diff", lib_diff);
+
 pub fn diff(expr: Expr, sym: &str) -> Expr {
     match expr {
         Expr::Num(_) => ZERO,
@@ -24,9 +27,28 @@ pub fn diff(expr: Expr, sym: &str) -> Expr {
                     * Expr::pow(*base.clone(), exp - ONE)
                     * diff(*base, sym)
             } else {
-                todo!()
+                let expr = Expr::Pow(base, exp);
+                Expr::Call(
+                    Box::new(CMD_DIFF),
+                    Box::new(Expr::Vec(vec![expr, Expr::Sym(sym.to_string())])),
+                )
             }
         }
-        _ => todo!(),
+        _ => Expr::Call(
+            Box::new(CMD_DIFF),
+            Box::new(Expr::Vec(vec![expr, Expr::Sym(sym.to_string())])),
+        ),
     }
+}
+
+pub fn lib_diff(expr: Expr) -> Expr {
+    match expr {
+        Expr::Vec(mut v) if v.len() == 2 => {
+            if let (Expr::Sym(s), e) = (v.pop().unwrap(), v.pop().unwrap()) {
+                return diff(e, &s);
+            }
+        }
+        _ => {}
+    }
+    Expr::err("arguments error")
 }

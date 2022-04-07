@@ -18,6 +18,8 @@ pub enum Expr {
     Mul(Mul),
     Pow(Box<Expr>, Box<Expr>),
     Vec(Vec<Expr>),
+    Cmd(&'static str, fn(Expr) -> Expr),
+    Call(Box<Expr>, Box<Expr>),
     Err(String),
 }
 
@@ -30,6 +32,8 @@ impl fmt::Debug for Expr {
             Expr::Mul(m) => fmt_expr_list(f, &m.clone().into_args(), " * "),
             Expr::Pow(b, e) => write!(f, "({:?} ^ {:?})", b, e),
             Expr::Vec(v) => fmt_expr_list(f, v, ", "),
+            Expr::Cmd(s, _) => write!(f, "{}", s),
+            Expr::Call(g, x) => write!(f, "{:?}({:?})", g, x),
             Expr::Err(s) => write!(f, "{}", s),
         }
     }
@@ -68,6 +72,10 @@ impl Expr {
     //     Expr::Num(Number::rational(num, den))
     // }
 
+    pub fn err(s: impl Into<String>) -> Expr {
+        Expr::Err(s.into())
+    }
+
     fn into_coeff_mul(self) -> (Num, Expr) {
         match self {
             Expr::Num(n) => (n, ONE),
@@ -82,11 +90,11 @@ impl Expr {
             (Expr::Err(mut s1), Expr::Err(s2)) => {
                 s1.push('\n');
                 s1.push_str(&s2);
-                Expr::Err(s1)
+                Expr::err(s1)
             }
             (Expr::Vec(_), _) | (_, Expr::Vec(_)) => {
                 let s = String::from("unsupported operand");
-                Expr::Err(s)
+                Expr::err(s)
             }
             (_, ZERO) => ONE,
             (base, ONE) => base,
@@ -103,6 +111,17 @@ impl Expr {
             (Expr::Pow(base, exp2), exp1) => Expr::pow(*base, *exp2 * exp1),
             (base, exp) => Expr::Pow(Box::new(base), Box::new(exp)),
         }
+    }
+
+    pub fn call(callable: Expr, argument: Expr) -> Expr {
+        match Expr::into_coeff_mul(callable) {
+            (c, Expr::Cmd(_, f)) => Expr::Num(c) * f(argument),
+            _ => Expr::err(""),
+        }
+    }
+
+    pub fn unevaluated_call(callable: Expr, argument: Expr) -> Expr {
+        Expr::Call(Box::new(callable), Box::new(argument))
     }
 
     pub fn sum<I>(iter: I) -> Expr
@@ -135,7 +154,7 @@ impl std::ops::Add for Expr {
             (Expr::Err(mut s1), Expr::Err(s2)) => {
                 s1.push('\n');
                 s1.push_str(&s2);
-                Expr::Err(s1)
+                Expr::err(s1)
             }
             (e @ Expr::Err(_), _) | (_, e @ Expr::Err(_)) => e,
             (Expr::Vec(mut v1), Expr::Vec(v2)) if v1.len() == v2.len() => {
@@ -144,14 +163,13 @@ impl std::ops::Add for Expr {
                 }
                 Expr::Vec(v1)
             }
-            (Expr::Vec(v1), Expr::Vec(v2)) => Expr::Err(format!(
+            (Expr::Vec(v1), Expr::Vec(v2)) => Expr::err(format!(
                 "unsupported operand: +: \\R^{} x \\R^{} -> ?",
                 v1.len(),
                 v2.len()
             )),
             (Expr::Vec(_), _) | (_, Expr::Vec(_)) => {
-                let s = String::from("unsupported operand");
-                Expr::Err(s)
+                Expr::err("unsupported operand")
             }
             (e1, e2) => {
                 let mut a = Add::new();
@@ -183,12 +201,9 @@ impl std::ops::Mul for Expr {
             (Expr::Err(mut s1), Expr::Err(s2)) => {
                 s1.push('\n');
                 s1.push_str(&s2);
-                Expr::Err(s1)
+                Expr::err(s1)
             }
-            (Expr::Vec(_), Expr::Vec(_)) => {
-                let s = String::from("unsupported operand");
-                Expr::Err(s)
-            }
+            (Expr::Vec(_), Expr::Vec(_)) => Expr::err("unsupported operand"),
             (Expr::Vec(mut v), c) | (c, Expr::Vec(mut v)) => {
                 for e in &mut v {
                     *e *= c.clone();
